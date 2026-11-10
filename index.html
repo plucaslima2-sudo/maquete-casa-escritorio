@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1A29">
+<meta name="robots" content="noindex, nofollow">
+<title>Maquete Casa-Escritório</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: prancha de arquiteto. Carimbo no topo, a maquete ocupa a folha, lista de cômodos na margem. */
+:root{
+  --bg:#E8EDF1; --surface:#F7F9FB; --ink:#14253A; --muted:#566779; --line:#C2CCD6;
+  --accent:#0B6E8F; --accent-ink:#FFFFFF; --scene:#DFE6EC; --lot:#CDD6DE; --label-bg:rgba(247,249,251,.93);
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A29; --surface:#15263A; --ink:#E6EEF5; --muted:#8FA3B8; --line:#2B4159;
+    --accent:#5CC8E8; --accent-ink:#06202B; --scene:#0B1522; --lot:#1A2C42; --label-bg:rgba(21,38,58,.93);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1A29; --surface:#15263A; --ink:#E6EEF5; --muted:#8FA3B8; --line:#2B4159;
+  --accent:#5CC8E8; --accent-ink:#06202B; --scene:#0B1522; --lot:#1A2C42; --label-bg:rgba(21,38,58,.93);
+  color-scheme:dark;
+}
+html,body{height:100%}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.45;
+  padding-block:12px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.app{
+  height:100%; display:grid; gap:10px;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto minmax(320px,1fr);
+}
+@media (min-width:900px){
+  .carimbo,.tools{grid-column:1 / -1}
+}
+
+/* carimbo (title block) */
+.carimbo{display:flex; flex-wrap:wrap; border:1px solid var(--line); background:var(--surface)}
+.carimbo h1{
+  margin:0; padding:8px 14px; font-family:var(--f-display); font-weight:700; font-size:26px; line-height:1.1;
+  letter-spacing:.02em; text-transform:uppercase; flex:1 1 240px; text-wrap:balance; align-self:center;
+}
+.cell{padding:7px 14px; border-left:1px solid var(--line); flex:0 1 auto; min-width:0}
+.cell b{display:block; font-family:var(--f-mono); font-weight:500; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+.cell span{font-family:var(--f-mono); font-size:13px; font-variant-numeric:tabular-nums}
+@media (max-width:620px){
+  .carimbo h1{flex-basis:100%; border-bottom:1px solid var(--line); font-size:22px}
+  .cell{flex:1 1 30%; padding:6px 10px}
+  .cell:first-of-type{border-left:0}
+}
+
+/* ferramentas */
+.tools{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.seg{display:inline-flex; border:1px solid var(--line); background:var(--surface)}
+.seg button, .tog{
+  font:600 14px var(--f-body); color:var(--ink); background:transparent; border:0; padding:8px 14px; cursor:pointer; min-height:38px;
+}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"], .tog[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink)}
+.tog{border:1px solid var(--line); background:var(--surface)}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* palco */
+.stage{position:relative; border:1px solid var(--line); background:var(--scene); overflow:hidden; min-height:320px}
+.stage canvas{position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.labels{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.lb{
+  position:absolute; left:0; top:0; white-space:nowrap; font:500 11px var(--f-mono); letter-spacing:.04em; text-transform:uppercase;
+  color:var(--ink); background:var(--label-bg); border:1px solid var(--line); padding:1px 5px; will-change:transform;
+}
+.lb.sel{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+.lb.mark{background:transparent; border:0; color:var(--muted); font-size:12px; letter-spacing:.2em}
+.tour{position:absolute; left:10px; top:10px; right:10px; display:flex; align-items:center; gap:6px; z-index:3; pointer-events:none}
+.tour[hidden]{display:none}
+.tour button{pointer-events:auto; font:600 14px/1 var(--f-body); color:var(--ink); background:var(--label-bg); border:1px solid var(--line); padding:0 14px; min-height:42px; cursor:pointer}
+.tour span{pointer-events:none; flex:0 1 auto; min-width:0; font:600 15px/1.2 var(--f-display); letter-spacing:.04em; text-transform:uppercase; color:var(--ink); background:var(--label-bg); border:1px solid var(--line); padding:11px 12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.info .tog{margin-top:10px}
+.hint{position:absolute; left:10px; bottom:8px; font:400 11px var(--f-mono); color:var(--muted); pointer-events:none}
+.fail{position:absolute; inset:0; display:grid; place-items:center; padding:24px; text-align:center; color:var(--muted)}
+
+/* margem */
+.side{display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0}
+.info{border:1px solid var(--line); background:var(--surface); padding:12px 14px}
+.info h2{margin:0; font-family:var(--f-display); font-weight:700; font-size:22px; line-height:1.15; text-transform:uppercase; letter-spacing:.02em}
+.info .dims{font:500 13px var(--f-mono); color:var(--accent); font-variant-numeric:tabular-nums; margin-top:2px}
+.info p{margin:8px 0 0; max-width:60ch}
+.info .src{font:400 12px var(--f-mono); color:var(--muted)}
+.rooms{display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; min-width:0}
+.rooms h3{flex:0 0 auto; margin:0; align-self:center; font:500 10px var(--f-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding-right:2px}
+.chip{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; font:500 13px var(--f-body); color:var(--ink);
+  background:var(--surface); border:1px solid var(--line); padding:7px 10px; cursor:pointer; min-height:36px;
+}
+.chip i{width:10px; height:10px; border:1px solid var(--ink); flex:0 0 auto}
+.chip[aria-pressed="true"]{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent)}
+.aviso{font-size:13px; color:var(--muted); margin:0; max-width:65ch}
+@media (min-width:900px){
+  .side{overflow-y:auto}
+  .rooms{flex-wrap:wrap; overflow-x:visible}
+  .rooms h3{flex-basis:100%; padding-top:4px}
+}
+.stage .info{position:absolute; left:10px; bottom:30px; z-index:3; max-width:min(340px, calc(100% - 20px)); background:var(--label-bg); padding:10px 12px}
+.stage .info[hidden]{display:none}
+.stage .info h2{font-size:18px}
+.stage .info p{font-size:13px; margin-top:6px}
+.tools > *{flex:0 0 auto}
+.seg button, .tog{min-height:44px}
+@media (max-width:620px){
+  body{padding-block:8px}
+  .app{gap:8px}
+  .carimbo .cell{display:none}
+  .carimbo h1{border-bottom:0; font-size:20px; padding:6px 12px}
+  .tools{gap:6px}
+  .seg{display:flex; flex:1 1 100%}
+  .seg button{flex:1 1 0; padding-inline:4px}
+  .tools > .tog{flex:1 1 0; padding-inline:4px; font-size:13px}
+  .stage .info p{display:none}
+  .stage .info{bottom:26px}
+  .hint{font-size:10px}
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header class="carimbo">
+    <h1>Maquete Casa-Escritório</h1>
+    <div class="cell"><b>Fonte</b><span>desenhos + fotos da rua</span></div>
+    <div class="cell"><b>Pavimentos</b><span>térreo + superior</span></div>
+    <div class="cell"><b>Área interna</b><span id="areaTotal">≈ — m²</span></div>
+    <div class="cell"><b>Medidas</b><span>estimadas</span></div>
+  </header>
+
+  <div class="tools">
+    <div class="seg" role="group" aria-label="Pavimento">
+      <button type="button" id="mFora" data-mode="fora" aria-pressed="true">Por fora</button>
+      <button type="button" id="mTerreo" data-mode="terreo" aria-pressed="false">Térreo</button>
+      <button type="button" id="mSup" data-mode="sup" aria-pressed="false">Superior</button>
+      <button type="button" id="mBoth" data-mode="both" aria-pressed="false">Os dois</button>
+    </div>
+    <button type="button" class="tog" id="btnTour" aria-pressed="false">Entrar nos cômodos</button>
+    <button type="button" class="tog" id="btnTop" aria-pressed="false">De cima</button>
+    <button type="button" class="tog" id="btnNames" aria-pressed="true">Nomes</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="Maquete 3D da casa, com térreo e pavimento superior"></canvas>
+    <div class="labels" id="labels" aria-hidden="true"></div>
+    <div class="tour" id="tour" hidden><button type="button" id="tPrev" aria-label="Cômodo anterior">◀</button><span id="tNome"></span><button type="button" id="tNext" aria-label="Próximo cômodo">▶</button><button type="button" id="tSair">Sair</button></div>
+    <section class="info" id="info" aria-live="polite" hidden></section>
+    <div class="hint">arraste para girar · pinça ou rolagem para aproximar · toque num cômodo para entrar</div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- dados da casa (metros). Rua lateral em x = 0; rua do portão preto em z = 0 ---------- */
+var TIPOS = {
+  social:  {cor:'#E9D9B8', nome:'Social'},
+  quarto:  {cor:'#C7D7EE', nome:'Quartos e salas'},
+  molhado: {cor:'#BCE2D8', nome:'Áreas molhadas'},
+  circ:    {cor:'#D9D5CF', nome:'Circulação'},
+  vidro:   {cor:'#CDE8D4', nome:'Salas de vidro'},
+  cov:     {cor:'#C9CBC9', nome:'Coberto'},
+  ext:     {cor:'#E4D8C4', nome:'Aberto'}
+};
+
+var TERREO = {
+  rooms: [
+    {id:'gi', nome:'Área gourmet (antiga garagem interna)', curto:'Área gourmet', tipo:'cov', x0:0, x1:4.7, z0:0, z1:6.2, sides:'', pessoas:14,
+      nota:'Churrasqueira, bancada com pia e cooktop, geladeira, aparador e uma mesa comunitária de 14 lugares. Com cerca de 25 pessoas no escritório, o almoço cabe em dois turnos. Por fora continua sendo a parte preta da esquina.'},
+    {id:'coz', nome:'Cozinha', curto:'Cozinha', tipo:'molhado', x0:4.7, x1:12.5, z0:0, z1:3.1, sides:'NWE',
+      nota:'Bancada sob as janelas com pia e cooktop, geladeira, ilha com banquetas e armário alto. A passagem para a sala cowork fica do lado oposto à piscina.'},
+    {id:'sala', nome:'Sala cowork', curto:'Cowork', tipo:'social', x0:4.7, x1:12.5, z0:3.1, z1:5.8, sides:'WE', area:30.1,
+      nota:'Duas bancadas longas com baias (8 lugares) e a escada em L no canto: começa do lado da cozinha, colada na parede da piscina, e termina de subir junto à parede da sala de reunião.'},
+    {id:'salab', part:'sala', tipo:'social', x0:7.5, x1:9.3, z0:5.8, z1:10.8, sides:''},
+    {id:'q1', nome:'Sala de reunião (Quarto 1)', curto:'Reunião', tipo:'quarto', x0:4.7, x1:7.5, z0:5.8, z1:10.8,
+      nota:'Mesa de reunião com 7 lugares e TV. Sem janela; a porta dá para o corredor interno.'},
+    {id:'b1', nome:'Banheiro', curto:'Banheiro', tipo:'molhado', x0:9.3, x1:12.5, z0:5.8, z1:10.8,
+      nota:'Bancada com duas cubas e espelho, sanitário e box de vidro. Sem janela; a porta dá para o corredor interno.'},
+    {id:'sala2', nome:'Sala da frente (1ª sala)', curto:'Sala da frente', tipo:'social', x0:4.7, x1:12.5, z0:10.8, z1:15.2, sides:'SWE', pessoas:3,
+      nota:'Primeira sala do térreo, com uma mesa individual e duas mesas perto do banheiro. Tem duas portas, uma do corredor de vidro e outra da sala de reunião grande.'},
+    {id:'patio', nome:'Área da piscina', curto:'Piscina', tipo:'ext', x0:0, x1:4.7, z0:6.2, z1:11.9, sides:'',
+      nota:'Piscina oval, menor, no meio da área. Do lado da rua fica o muro de azulejo branco.'},
+    {id:'patiob', part:'patio', tipo:'ext', x0:0, x1:2.9, z0:11.9, z1:15.2, sides:''},
+    {id:'s2p', nome:'Sala de 2 pessoas', curto:'Sala 2 pessoas', tipo:'vidro', x0:2.9, x1:4.7, z0:11.9, z1:15.2, sides:'', pessoas:2,
+      nota:'Mini sala com divisórias de vidro, ao lado da piscina e encostada na casa, com uma bancada para duas pessoas. A porta vem da recepção.'},
+    {id:'ent', nome:'Entrada', curto:'Entrada', tipo:'ext', x0:0, x1:1.27, z0:15.2, z1:18.5, sides:'',
+      nota:'Faixa logo depois do portão branco de ripas, antes da recepção.'},
+    {id:'rec', nome:'Recepção', curto:'Recepção', tipo:'vidro', x0:1.27, x1:4.7, z0:15.2, z1:18.5, sides:'',
+      nota:'Fechada com vidro, sem balcão: sofá, puffs, TV grande e plantas. Tem porta para a sala de 2 pessoas e porta para o corredor. A porta vinda do portão é suposição.'},
+    {id:'corr', nome:'Corredor de vidro', curto:'Corredor', tipo:'circ', x0:4.7, x1:6.9, z0:15.2, z1:18.5, sides:'',
+      nota:'Liga a recepção à primeira sala do térreo. Uma linha de vidro separa do cômodo ao lado.'},
+    {id:'prox', nome:'Sala de reunião grande', curto:'Reunião grande', tipo:'ext', x0:6.9, x1:12.5, z0:15.2, z1:18.5, sides:'',
+      nota:'Antiga garagem externa, com mesa de reunião longa de 10 lugares e TV. Tem uma porta para a sala da frente e vidro separando do corredor.'}
+  ],
+  openings: [
+    {axis:'z', at:0, from:6.75, to:7.55, kind:'window'},
+    {axis:'z', at:0, from:9.75, to:11.55, kind:'window'},
+    {axis:'x', at:7.5, from:6.45, to:7.2, kind:'door'},
+    {axis:'x', at:9.3, from:6.45, to:7.2, kind:'door'},
+    {axis:'z', at:15.2, from:5.1, to:6.0, kind:'door'},
+    {axis:'z', at:15.2, from:9.75, to:10.5, kind:'door'},
+    {axis:'z', at:6.2, from:0, to:3.7, kind:'gate'}
+  ],
+  extra: [
+    {axis:'z', at:3.1, from:4.7, to:9.7},
+    {axis:'z', at:3.1, from:11.15, to:12.5},
+    {axis:'z', at:6.2, from:0, to:4.7}
+  ],
+  vidros: [
+    {axis:'x', at:1.27, from:15.2, to:18.5, portas:[[16.3, 16.9]]},
+    {axis:'z', at:15.2, from:1.27, to:4.7, portas:[[3.3, 4.2]]},
+    {axis:'x', at:4.7, from:15.2, to:18.5, portas:[[15.75, 16.4]]},
+    {axis:'x', at:6.9, from:15.2, to:18.5, portas:[]},
+    {axis:'x', at:2.9, from:11.9, to:15.2, portas:[]},
+    {axis:'z', at:11.9, from:2.9, to:4.7, portas:[]}
+  ]
+};
+
+var SUPERIOR = {
+  rooms: [
+    {id:'qv', nome:'Sala de vidro', curto:'Sala de vidro', tipo:'social', x0:4.7, x1:12.5, z0:12.35, z1:15.2, pessoas:6,
+      nota:'Na ponta do andar, com vidro em dois lados. Mesa em U no fundo e uma mesa pequena perto da porta dupla.'},
+    {id:'s3', nome:'Sala (ao lado da de vidro)', curto:'Sala', tipo:'quarto', x0:4.7, x1:9.2, z0:9.1, z1:12.35, pessoas:3,
+      nota:'Duas mesas: uma comprida na parede da sala de vidro e uma do outro lado.'},
+    {id:'s1', nome:'Sala', curto:'Sala', tipo:'quarto', x0:4.7, x1:9.2, z0:5.8, z1:9.1, pessoas:1,
+      nota:'Sala individual, com mesa, aparador, sofá e tapete.'},
+    {id:'esc', nome:'Escada', curto:'Escada', tipo:'circ', x0:7.8, x1:9.2, z0:4.8, z1:5.8, sides:'',
+      nota:'Chegada da escada em L que vem do térreo, entre a Sala e a construtora. O vão aberto mostra os degraus descendo; a escada sai direto no corredor e tem o painel de cobogó na fachada.'},
+    {id:'constr', nome:'Sala da construtora (suíte)', curto:'Construtora', tipo:'quarto', x0:4.7, x1:9.2, z0:0, z1:4.8, pessoas:2,
+      nota:'Na ponta da esquina, com uma mesa grande. Tem banheiro próprio.'},
+    {id:'bsu', nome:'Banheiro da suíte (posição a confirmar)', curto:'Banho suíte ?', tipo:'molhado', x0:4.7, x1:5.9, z0:3.7, z1:4.8, sides:'NE', lift:0.012,
+      nota:'A suíte tem banheiro, mas a divisão não foi desenhada. A posição aqui é um palpite.'},
+    {id:'bc', nome:'Banheiro compartilhado', curto:'Banheiro', tipo:'molhado', x0:9.2, x1:12.5, z0:0, z1:2.1,
+      nota:'Abre para o corredor. Tem bancada com cuba e espelho, sanitário e box de vidro.'},
+    {id:'hall', nome:'Corredor', curto:'Corredor', tipo:'circ', x0:9.2, x1:12.5, z0:2.1, z1:12.35, sides:'E',
+      nota:'Todas as salas abrem para ele. Tem passadeira, plantas e quadros.'}
+  ],
+  openings: [
+    {axis:'z', at:12.35, from:9.6, to:10.9, kind:'door'},
+    {axis:'x', at:9.2, from:9.4, to:10.05, kind:'door'},
+    {axis:'x', at:9.2, from:6.1, to:6.7, kind:'door'},
+    {axis:'x', at:9.2, from:2.35, to:2.95, kind:'door'},
+    {axis:'z', at:2.1, from:11.45, to:12.05, kind:'door'},
+    {axis:'z', at:3.7, from:5.05, to:5.7, kind:'door'},
+    {axis:'x', at:4.7, from:12.65, to:15.0, kind:'glass'},
+    {axis:'z', at:15.2, from:5.5, to:11.8, kind:'glass'},
+    {axis:'x', at:4.7, from:9.8, to:11.6, kind:'window'},
+    {axis:'x', at:4.7, from:6.6, to:8.4, kind:'window'},
+    {axis:'x', at:4.7, from:4.9, to:5.7, kind:'cobogo'},
+    {axis:'x', at:4.7, from:4.0, to:4.5, kind:'window'},
+    {axis:'x', at:4.7, from:0.6, to:2.0, kind:'window'},
+    {axis:'z', at:0, from:5.6, to:8.2, kind:'window'},
+    {axis:'z', at:0, from:10.3, to:11.6, kind:'window'},
+    {axis:'x', at:12.5, from:5.0, to:6.0, kind:'cobogo'},
+    {axis:'x', at:12.5, from:9.0, to:10.0, kind:'cobogo'}
+  ],
+  extra: [{axis:'x', at:4.7, from:4.8, to:5.8}],
+  vidros: []
+};
+
+var LOTE = {x0:0, x1:12.5, z0:0, z1:18.5};
+var CASA = {x0:4.7, x1:12.5, z0:0, z1:15.2};   // projeção do andar de cima
+var H = 1.5, T = 0.14, GAP = 5, FH = 2.8;
+
+/* ---------- utilidades ---------- */
+function fmt(n, d){ return n.toFixed(d === undefined ? 1 : d).replace('.', ','); }
+function areaDe(r){ return r.area !== undefined ? r.area : (r.x1 - r.x0) * (r.z1 - r.z0); }
+function merge(list){
+  var s = list.slice().sort(function(a,b){ return a[0]-b[0]; }), out = [];
+  s.forEach(function(iv){
+    var last = out[out.length-1];
+    if (last && iv[0] <= last[1] + 0.001) last[1] = Math.max(last[1], iv[1]);
+    else out.push([iv[0], iv[1]]);
+  });
+  return out;
+}
+function subtract(solid, holes){
+  var out = solid.map(function(s){ return [s[0], s[1]]; });
+  holes.forEach(function(h){
+    var next = [];
+    out.forEach(function(s){
+      if (h[1] <= s[0] || h[0] >= s[1]) { next.push(s); return; }
+      if (h[0] > s[0]) next.push([s[0], h[0]]);
+      if (h[1] < s[1]) next.push([h[1], s[1]]);
+    });
+    out = next;
+  });
+  return out;
+}
+
+/* ---------- cena ---------- */
+var stage = document.getElementById('stage');
+var canvas = document.getElementById('cv');
+var labelsEl = document.getElementById('labels');
+var infoEl = document.getElementById('info');
+
+var renderer;
+try {
+  if (!window.THREE || !THREE.OrbitControls) throw new Error('biblioteca 3D não carregou');
+  renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true});
+} catch (e) {
+  var f = document.createElement('div'); f.className = 'fail';
+  f.textContent = 'Não foi possível abrir a maquete 3D neste aparelho. Tente abrir o link no navegador do celular ou do computador.';
+  stage.appendChild(f); canvas.hidden = true;
+  fillInfo(null); buildChips();
+  return;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 400);
+var controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.12;
+controls.maxPolarAngle = Math.PI / 2.08; controls.minDistance = 2; controls.maxDistance = 120;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a97a8, 0.62));
+var sun = new THREE.DirectionalLight(0xffffff, 0.38); sun.position.set(-8, 16, 12); scene.add(sun);
+
+var matWall = new THREE.MeshLambertMaterial({color:0xF3F0EA});
+var matMuro = new THREE.MeshLambertMaterial({color:0xD5D6D2});
+var matGlass = new THREE.MeshLambertMaterial({color:0x8CC6E0, transparent:true, opacity:0.5});
+var matCobogo = new THREE.MeshLambertMaterial({color:0xE2A46F});
+var matGate = new THREE.MeshLambertMaterial({color:0x2B2F36, transparent:true, opacity:0.4});
+var matStep = new THREE.MeshLambertMaterial({color:0xE6E8EA});
+var matGranito = new THREE.MeshLambertMaterial({color:0x23262B});
+var matLouca = new THREE.MeshLambertMaterial({color:0xFFFFFF});
+var matThresh = new THREE.MeshLambertMaterial({color:0x7A5236});
+var matEdge = new THREE.LineBasicMaterial({color:0x14253A, transparent:true, opacity:0.32});
+var matGuide = new THREE.LineBasicMaterial({color:0x566779, transparent:true, opacity:0.6});
+
+function box(g, x0, x1, y0, y1, z0, z1, mat, edges){
+  var w = x1-x0, h = y1-y0, d = z1-z0;
+  if (w <= 0.005 || h <= 0.005 || d <= 0.005) return null;
+  var geo = new THREE.BoxGeometry(w, h, d);
+  var m = new THREE.Mesh(geo, mat);
+  m.position.set((x0+x1)/2, (y0+y1)/2, (z0+z1)/2);
+  g.add(m);
+  if (edges) { var l = new THREE.LineSegments(new THREE.EdgesGeometry(geo), matEdge); l.position.copy(m.position); g.add(l); }
+  return m;
+}
+function wall(g, axis, at, a, b, y0, y1, mat, edges, thick, ext){
+  var t = (thick || T) / 2, e = ext ? t : 0;
+  if (axis === 'z') return box(g, a-e, b+e, y0, y1, at-t, at+t, mat, edges);
+  return box(g, at-t, at+t, y0, y1, a-e, b+e, mat, edges);
+}
+
+var floors = [];      // meshes clicáveis
+var rooms = {};       // id -> {def, group, mesh, label, chip}
+var lot = new THREE.Group(), gT = new THREE.Group(), gS = new THREE.Group(), guides = new THREE.Group();
+scene.add(lot, gT, gS, guides);
+
+function buildFloor(def, group, andar){
+  var lines = {};
+  function line(e){
+    var k = e.axis + ':' + e.at.toFixed(2);
+    if (!lines[k]) lines[k] = {axis:e.axis, at:e.at, solid:[], holes:[]};
+    return lines[k];
+  }
+  def.rooms.forEach(function(r){
+    var s = r.sides === undefined ? 'NSWE' : r.sides;
+    if (s.indexOf('N') >= 0) line({axis:'z', at:r.z0}).solid.push([r.x0, r.x1]);
+    if (s.indexOf('S') >= 0) line({axis:'z', at:r.z1}).solid.push([r.x0, r.x1]);
+    if (s.indexOf('W') >= 0) line({axis:'x', at:r.x0}).solid.push([r.z0, r.z1]);
+    if (s.indexOf('E') >= 0) line({axis:'x', at:r.x1}).solid.push([r.z0, r.z1]);
+
+    var cor = TIPOS[r.tipo].cor, lift = r.lift || 0;
+    var mat = new THREE.MeshLambertMaterial({color:cor});
+    var mesh = box(group, r.x0, r.x1, -0.12 + lift, lift, r.z0, r.z1, mat, false);
+    var id = r.part || r.id;
+    mesh.userData.id = id; floors.push(mesh);
+    if (!r.part) rooms[r.id] = {def:r, group:group, andar:andar, meshes:[mesh], base:new THREE.Color(cor)};
+    else rooms[id].meshes.push(mesh);
+  });
+  (def.extra || []).forEach(function(e){ line(e).solid.push([e.from, e.to]); });
+  def.openings.forEach(function(o){ line(o).holes.push(o); });
+
+  Object.keys(lines).forEach(function(k){
+    var L = lines[k];
+    var solid = merge(L.solid);
+    subtract(solid, L.holes.map(function(o){ return [o.from, o.to]; })).forEach(function(iv){
+      wall(group, L.axis, L.at, iv[0], iv[1], 0, H, matWall, true, T, true);
+    });
+    L.holes.forEach(function(o){
+      if (o.kind === 'door') { wall(group, L.axis, L.at, o.from, o.to, 0, 0.02, matThresh, false, T); }
+      else if (o.kind === 'window') { wall(group, L.axis, L.at, o.from, o.to, 0, 0.85, matWall, true); wall(group, L.axis, L.at, o.from, o.to, 0.85, H, matGlass, false, 0.05); }
+      else if (o.kind === 'glass') { wall(group, L.axis, L.at, o.from, o.to, 0, 0.45, matWall, true); wall(group, L.axis, L.at, o.from, o.to, 0.45, H, matGlass, false, 0.05); }
+      else if (o.kind === 'cobogo') { wall(group, L.axis, L.at, o.from, o.to, 0, 0.85, matWall, true); wall(group, L.axis, L.at, o.from, o.to, 0.85, H, matCobogo, true); }
+      else if (o.kind === 'gate') { wall(group, L.axis, L.at, o.from, o.to, 0, H, matGate, false, 0.05); }
+    });
+  });
+}
+buildFloor(TERREO, gT, 'Térreo');
+buildFloor(SUPERIOR, gS, 'Superior');
+
+/* grupos extras: móveis (não esticam), muros baixos do corte e casca de fora */
+var fT = new THREE.Group(), fS = new THREE.Group(), muros = new THREE.Group(), shell = new THREE.Group();
+scene.add(fT, fS, muros, shell);
+var matVidro = new THREE.MeshLambertMaterial({color:0x6FCF97, transparent:true, opacity:0.38});
+var matMesa = new THREE.MeshLambertMaterial({color:0xE2B23C});
+var matPe = new THREE.MeshLambertMaterial({color:0x8A6A1F});
+var matCadeira = new THREE.MeshLambertMaterial({color:0x3A3F47});
+var matPreto = new THREE.MeshLambertMaterial({color:0x1F2023});
+var matOnda = new THREE.MeshLambertMaterial({color:0x2C2E33});
+var matEnrolar = new THREE.MeshLambertMaterial({color:0x44474D});
+var matAzulejo = new THREE.MeshLambertMaterial({color:0xECEAE4});
+var matFaixa = new THREE.MeshLambertMaterial({color:0x2F4FA8});
+var matBranco = new THREE.MeshLambertMaterial({color:0xF6F6F3});
+var matTelha = new THREE.MeshLambertMaterial({color:0xB8573A});
+var matCalcada = new THREE.MeshLambertMaterial({color:0xD9D3C6});
+var matCobertura = new THREE.MeshLambertMaterial({color:0xC9C6BF});
+
+function vidro(g, v){
+  subtract([[v.from, v.to]], v.portas).forEach(function(iv){ wall(g, v.axis, v.at, iv[0], iv[1], 0, H, matVidro, true, 0.05); });
+  v.portas.forEach(function(p){ wall(g, v.axis, v.at, p[0], p[1], 0, 0.02, matThresh, false, T); });
+}
+[[TERREO, gT], [SUPERIOR, gS]].forEach(function(t){ t[0].vidros.forEach(function(v){ vidro(t[1], v); }); });
+
+/* terreno, calçadas e escala */
+var lotMat = new THREE.MeshLambertMaterial({color:0xCDD6DE});
+box(lot, LOTE.x0-0.4, LOTE.x1+0.4, -0.22, -0.125, LOTE.z0-0.4, LOTE.z1+0.4, lotMat, false);
+box(lot, -2.4, -0.4, -0.22, -0.14, -2.4, LOTE.z1+0.4, matCalcada, false);
+box(lot, -0.4, LOTE.x1+0.4, -0.22, -0.14, -2.4, -0.4, matCalcada, false);
+var matBar = new THREE.MeshBasicMaterial({color:0x566779});
+box(lot, 0, 5, -0.12, -0.06, 19.75, 19.85, matBar, false);
+[0,1,2,3,4,5].forEach(function(i){ box(lot, i-0.02, i+0.02, -0.12, -0.06, 19.75, 20.0, matBar, false); });
+function palmeira(x, z){
+  var tr = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 2.6, 8), new THREE.MeshLambertMaterial({color:0x8B7355}));
+  tr.position.set(x, 1.2, z); lot.add(tr);
+  var co = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 6), new THREE.MeshLambertMaterial({color:0x4E9A4A}));
+  co.scale.set(1.15, 0.42, 1.15); co.position.set(x, 2.7, z); lot.add(co);
+}
+palmeira(-1.3, 2.6); palmeira(-1.3, 9.0); palmeira(-1.3, 14.9); palmeira(7.0, -1.3);
+
+/* muros baixos (só nas vistas em corte) */
+var MH = 1.1;
+wall(muros, 'x', 0, 0, 11.5, 0, MH, matMuro, true, 0.12, true);
+wall(muros, 'x', 0, 11.5, 14.3, 0, MH, matGate, false, 0.05);          // portão duplo branco
+wall(muros, 'x', 0, 14.3, 15.8, 0, MH, matMuro, true, 0.12, true);
+wall(muros, 'x', 0, 15.8, 18.05, 0, MH, matGate, false, 0.05);         // portão de ripas (entrada)
+wall(muros, 'x', 0, 18.05, 18.5, 0, MH, matMuro, true, 0.12, true);
+wall(muros, 'z', 18.5, 0, 12.5, 0, MH, matMuro, true, 0.12, true);
+wall(muros, 'x', 12.5, 15.2, 18.5, 0, MH, matMuro, true, 0.12, true);
+wall(muros, 'z', 0, 0, 1.05, 0, MH, matMuro, true, 0.12, true);
+wall(muros, 'z', 0, 4.45, 4.7, 0, MH, matMuro, true, 0.12, true);
+wall(muros, 'z', 0, 1.05, 4.45, 0, MH, matGate, false, 0.05);           // portão preto de enrolar
+
+/* casca de fora, conforme as fotos da rua */
+(function(){
+  function azulejo(axis, at, a, b, h){ wall(shell, axis, at, a, b, 0, h, matAzulejo, true, 0.14, true); wall(shell, axis, at, a, b, h, h+0.12, matFaixa, false, 0.2, true); }
+  // esquina preta: garagem interna (muro, portão de enrolar, testeira ondulada, laje branca)
+  wall(shell, 'z', 0, 0, 1.05, 0, 2.6, matPreto, true, 0.16, true);
+  wall(shell, 'z', 0, 4.45, 4.7, 0, 2.6, matPreto, true, 0.16, true);
+  wall(shell, 'z', 0, 1.05, 4.45, 0, 2.6, matEnrolar, true, 0.08);
+  wall(shell, 'z', 0, 0, 4.7, 2.6, 4.3, matOnda, true, 0.1, true);
+  wall(shell, 'x', 0, 0, 6.2, 0, 2.6, matPreto, true, 0.16, true);
+  wall(shell, 'x', 0, 0, 6.2, 2.6, 4.3, matOnda, true, 0.1, true);
+  box(shell, -0.35, 4.63, 4.3, 4.45, -0.35, 6.2, matBranco, true);
+  // forro claro por dentro da área gourmet (por fora continua preto)
+  box(shell, 0.085, 0.1, 0, 4.3, 0.085, 6.2, matWall, false);
+  box(shell, 0.1, 1.05, 0, 4.3, 0.085, 0.1, matWall, false);
+  box(shell, 4.45, 4.63, 0, 4.3, 0.085, 0.1, matWall, false);
+  box(shell, 1.05, 4.45, 2.6, 4.3, 0.085, 0.1, matWall, false);
+  box(shell, 0.1, 4.63, 4.27, 4.3, 0.1, 6.2, matWall, false);
+  // muro de azulejo branco com faixa azul, portão duplo, pilar e portão de ripas
+  azulejo('x', 0, 6.2, 11.5, 2.2);
+  wall(shell, 'x', 0, 11.5, 14.3, 0, 2.15, matBranco, true, 0.06);
+  azulejo('x', 0, 14.3, 15.8, 2.4);
+  for (var i = 0; i < 10; i++) { if (i > 2 && i < 6) continue; wall(shell, 'x', 0, 15.8, 18.05, 0.08 + i*0.22, 0.2 + i*0.22, matBranco, false, 0.06); }
+  wall(shell, 'x', 0, 15.8, 18.05, 0.74, 1.4, matVidro, false, 0.04);
+  azulejo('x', 0, 18.05, 18.5, 2.4);
+  azulejo('z', -0.28, 4.8, 12.5, 2.2);
+  wall(shell, 'z', 18.5, 0, 12.5, 0, 2.6, matMuro, true, 0.14, true);
+  wall(shell, 'x', 12.5, 15.2, 18.5, 0, 2.6, matMuro, true, 0.14, true);
+  // cobertura da entrada e da antiga garagem externa
+  box(shell, 0.05, 4.62, 2.72, 2.8, 11.9, 15.2, matCobertura, true);
+  box(shell, 0.05, 12.45, 2.72, 2.8, 15.2, 18.45, matCobertura, true);
+  // telhado de telha de uma água e beiral
+  var sh = new THREE.Shape();
+  sh.moveTo(CASA.x0 - 0.5, 0); sh.lineTo(CASA.x1 + 0.5, 0); sh.lineTo(CASA.x1 + 0.5, 1.4); sh.closePath();   // uma água só: alto na divisa, cai para o lado da piscina
+  var telhado = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, {depth: CASA.z1 - CASA.z0 + 1, bevelEnabled:false}), matTelha);
+  telhado.position.set(0, 2*FH, CASA.z0 - 0.5); shell.add(telhado);
+  box(shell, CASA.x0 - 0.5, CASA.x1 + 0.5, 2*FH - 0.1, 2*FH, CASA.z0 - 0.5, CASA.z1 + 0.5, matBranco, true);
+  // ar-condicionado na fachada da rua lateral
+  [[8.5, 9.0], [11.65, 12.2], [2.05, 2.6]].forEach(function(a){ box(shell, CASA.x0 - 0.32, CASA.x0 - 0.07, FH + 1.9, FH + 2.35, a[0], a[1], matBranco, true); });
+})();
+
+/* piscina oval */
+(function(){
+  var rim = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 40), new THREE.MeshLambertMaterial({color:0xF1EADB}));
+  rim.scale.set(1.07, 1, 2.22); rim.position.set(2.2, 0.05, 9.1); fT.add(rim);
+  var agua = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.1, 40), new THREE.MeshLambertMaterial({color:0x3AA7E6}));
+  agua.scale.set(0.95, 1, 2.1); agua.position.set(2.2, 0.07, 9.1); fT.add(agua);
+})();
+
+/* escada em L, no canto da sala cowork: começa do lado da cozinha, 1º lance colado na parede da piscina,
+   patamar no canto, 2º lance junto à parede da sala de reunião, chegando em cima no vão da escada */
+var escS = new THREE.Group(); gS.add(escS);
+(function(){
+  var n1 = 7, n2 = 8, rise = H / (n1 + n2 + 1), i;
+  function degraus(g, y0){
+    for (i = 0; i < n1; i++) box(g, 4.8, 5.7, y0, y0 + (i+1)*rise, 3.55 + i*(1.3/n1), 3.55 + (i+1)*(1.3/n1), matStep, true);
+    box(g, 4.8, 5.7, y0, y0 + (n1+1)*rise, 4.85, 5.75, matStep, true);
+    for (i = 0; i < n2; i++) box(g, 5.7 + i*(2.1/n2), 5.7 + (i+1)*(2.1/n2), y0, y0 + (n1+2+i)*rise, 4.85, 5.75, matStep, true);
+  }
+  degraus(gT, 0);
+  degraus(escS, -H);   // cópia pendurada no andar de cima: nas vistas em corte dá a leitura de descida
+})();
+
+/* louças (só para a leitura dos cômodos) */
+function louca(g, x, z){ box(g, x-0.2, x+0.2, 0, 0.42, z-0.3, z+0.3, matLouca, true); }
+
+
+/* ---------- móveis e decoração (tamanho real; não esticam na vista de fora) ---------- */
+function L(c){ return new THREE.MeshLambertMaterial({color:c}); }
+var C = { madeira:L(0xC9A27A), nogueira:L(0x7A4E2D), metal:L(0x2B2F36), cadeira:L(0x30353C), couro:L(0x8A5A2B), sofa:L(0x4F6D7A),
+  almofada:L(0x7C9BA8), vaso:L(0xE9E3D7), folha:L(0x3E8E4E), folha2:L(0x2F7D45), tapete:L(0xC9D2D6), tapete2:L(0xDCCDB0),
+  tela:L(0x15171A), branco:L(0xF2F1EC), destaque:L(0x0B6E8F), lona:L(0xF3EBDD) };
+function mesa(g, x0, x1, z0, z1, mat){
+  box(g, x0, x1, 0.71, 0.75, z0, z1, mat || C.madeira, true);
+  [[x0+0.05, z0+0.05], [x1-0.1, z0+0.05], [x0+0.05, z1-0.1], [x1-0.1, z1-0.1]].forEach(function(p){ box(g, p[0], p[0]+0.05, 0, 0.71, p[1], p[1]+0.05, C.metal, false); });
+}
+function cadeira(g, x, z, fx, fz, mat){          // fx,fz = para onde a pessoa olha
+  var m = mat || C.cadeira, alto = mat === C.couro ? 1.22 : 1.0;
+  box(g, x-0.26, x+0.26, 0.03, 0.07, z-0.03, z+0.03, C.metal, false);
+  box(g, x-0.03, x+0.03, 0.03, 0.07, z-0.26, z+0.26, C.metal, false);
+  box(g, x-0.03, x+0.03, 0.07, 0.42, z-0.03, z+0.03, C.metal, false);
+  box(g, x-0.23, x+0.23, 0.42, 0.5, z-0.23, z+0.23, m, true);
+  if (fx) box(g, x-fx*0.22-0.03, x-fx*0.22+0.03, 0.55, alto, z-0.21, z+0.21, m, true);
+  else box(g, x-0.21, x+0.21, 0.55, alto, z-fz*0.22-0.03, z-fz*0.22+0.03, m, true);
+}
+function monitor(g, x, z, fx){                    // fx = 1 se a tela fica atravessada no eixo x
+  if (fx) { box(g, x-0.015, x+0.015, 0.86, 1.18, z-0.27, z+0.27, C.tela, false); box(g, x-0.05, x+0.05, 0.75, 0.86, z-0.04, z+0.04, C.metal, false); }
+  else { box(g, x-0.27, x+0.27, 0.86, 1.18, z-0.015, z+0.015, C.tela, false); box(g, x-0.04, x+0.04, 0.75, 0.86, z-0.05, z+0.05, C.metal, false); }
+}
+function sofa(g, x0, x1, z0, z1, bx, bz){         // bx,bz = lado do encosto
+  box(g, x0, x1, 0.08, 0.42, z0, z1, C.sofa, true);
+  if (bz) {
+    box(g, x0, x1, 0.42, 0.82, bz > 0 ? z1-0.2 : z0, bz > 0 ? z1 : z0+0.2, C.sofa, true);
+    box(g, x0, x0+0.16, 0.42, 0.62, z0, z1, C.sofa, false); box(g, x1-0.16, x1, 0.42, 0.62, z0, z1, C.sofa, false);
+    box(g, x0+0.2, x1-0.2, 0.42, 0.5, bz > 0 ? z0+0.04 : z0+0.24, bz > 0 ? z1-0.24 : z1-0.04, C.almofada, false);
+  } else {
+    box(g, bx > 0 ? x1-0.2 : x0, bx > 0 ? x1 : x0+0.2, 0.42, 0.82, z0, z1, C.sofa, true);
+    box(g, x0, x1, 0.42, 0.62, z0, z0+0.16, C.sofa, false); box(g, x0, x1, 0.42, 0.62, z1-0.16, z1, C.sofa, false);
+    box(g, bx > 0 ? x0+0.04 : x0+0.24, bx > 0 ? x1-0.24 : x1-0.04, 0.42, 0.5, z0+0.2, z1-0.2, C.almofada, false);
+  }
+}
+function planta(g, x, z, alt){
+  var h = alt || 1.3;
+  var v = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.13, 0.34, 14), C.vaso); v.position.set(x, 0.17, z); g.add(v);
+  var t = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, h-0.5, 6), C.nogueira); t.position.set(x, 0.34+(h-0.5)/2, z); g.add(t);
+  [[0, h-0.18, 0, 0.3, C.folha], [0.12, h-0.42, 0.08, 0.24, C.folha2], [-0.1, h-0.52, -0.1, 0.22, C.folha]].forEach(function(f){
+    var e = new THREE.Mesh(new THREE.SphereGeometry(f[3], 10, 8), f[4]); e.scale.y = 1.25; e.position.set(x+f[0], f[1], z+f[2]); g.add(e);
+  });
+}
+function tapete(g, x0, x1, z0, z1, mat){ box(g, x0, x1, 0.004, 0.02, z0, z1, mat || C.tapete, false); }
+function armario(g, x0, x1, z0, z1, alt){ box(g, x0, x1, 0, alt || 1.9, z0, z1, C.branco, true); }
+function tv(g, axis, at, a, b){ if (axis === 'z') box(g, a, b, 1.15, 1.85, at-0.03, at+0.03, C.tela, false); else box(g, at-0.03, at+0.03, 1.15, 1.85, a, b, C.tela, false); }
+function redonda(g, x, z, r){
+  var t = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.04, 28), C.madeira); t.position.set(x, 0.73, z); g.add(t);
+  var p = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.22, 0.71, 12), C.metal); p.position.set(x, 0.355, z); g.add(p);
+}
+
+var matTijolo = L(0xA5553A), matInox = L(0xB9BEC4), matEspelho = L(0xBFD9E6), matMostarda = L(0xE2B23C);
+function puff(g, x, z, mat){ var m = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.29, 0.42, 20), mat); m.position.set(x, 0.21, z); g.add(m); }
+function sanitario(g, x, z, fx, fz){             // fx,fz = para onde a pessoa sentada olha
+  box(g, x-0.19, x+0.19, 0, 0.4, z-0.19, z+0.19, C.branco, true);
+  if (fx) box(g, x-fx*0.3-0.09, x-fx*0.3+0.09, 0, 0.78, z-0.2, z+0.2, C.branco, true);
+  else box(g, x-0.2, x+0.2, 0, 0.78, z-fz*0.3-0.09, z-fz*0.3+0.09, C.branco, true);
+}
+function bancada(g, x0, x1, z0, z1, tampo){ box(g, x0, x1, 0, 0.86, z0, z1, C.branco, true); box(g, x0-0.02, x1+0.02, 0.86, 0.9, z0-0.02, z1+0.02, tampo || matGranito, false); }
+function cuba(g, x, z){ box(g, x-0.2, x+0.2, 0.9, 0.93, z-0.16, z+0.16, matInox, false); }
+function banqueta(g, x, z){
+  var a = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 16), C.madeira); a.position.set(x, 0.66, z); g.add(a);
+  var b = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.14, 0.64, 10), C.metal); b.position.set(x, 0.32, z); g.add(b);
+}
+function quadro(g, axis, at, a, b, mat){ if (axis === 'z') box(g, a, b, 1.25, 1.85, at-0.015, at+0.015, mat, true); else box(g, at-0.015, at+0.015, 1.25, 1.85, a, b, mat, true); }
+
+/* térreo */
+(function(){
+  var g = fT;
+  // recepção: sofá, puffs, TV grande e plantas (sem balcão)
+  tapete(g, 1.5, 4.4, 15.3, 17.7, C.tapete2);
+  sofa(g, 1.5, 3.1, 15.32, 16.1, 0, -1);
+  box(g, 2.0, 4.2, 0, 0.45, 18.02, 18.4, C.nogueira, true);
+  box(g, 2.2, 4.0, 0.95, 2.0, 18.36, 18.4, C.tela, false);
+  puff(g, 3.7, 16.95, C.destaque); puff(g, 4.15, 17.55, matMostarda); puff(g, 1.8, 17.35, C.sofa); puff(g, 2.5, 17.1, matMostarda);
+  planta(g, 1.62, 18.12, 1.5); planta(g, 4.4, 15.5, 1.1);
+  // sala de 2 pessoas
+  mesa(g, 4.0, 4.6, 12.2, 14.4);
+  [12.8, 13.8].forEach(function(z){ cadeira(g, 3.65, z, 1, 0); monitor(g, 4.42, z, 1); });
+  planta(g, 3.15, 12.15, 1.2);
+  // corredor de vidro
+  box(g, 5.2, 6.5, 0, 0.45, 18.0, 18.38, C.nogueira, true);
+  box(g, 5.3, 6.4, 1.3, 1.9, 18.38, 18.41, C.destaque, false);
+  planta(g, 6.6, 15.5, 1.3);
+  // sala de reunião grande (antiga garagem externa)
+  mesa(g, 7.7, 11.8, 16.6, 17.7, C.nogueira);
+  [8.2, 9.2, 10.2, 11.2].forEach(function(x){ cadeira(g, x, 16.3, 0, 1); cadeira(g, x, 18.0, 0, -1); });
+  cadeira(g, 7.4, 17.15, 1, 0); cadeira(g, 12.1, 17.15, -1, 0);
+  tv(g, 'z', 18.4, 9.1, 10.7); planta(g, 7.25, 15.6, 1.4);
+  // sala da frente: 1 mesa individual + 2 mesas perto do banheiro
+  tapete(g, 5.0, 7.2, 11.3, 13.1);
+  mesa(g, 5.3, 6.9, 11.9, 12.5); cadeira(g, 6.1, 11.52, 0, 1); monitor(g, 6.1, 12.35, 0);
+  mesa(g, 11.85, 12.42, 13.5, 14.9); cadeira(g, 11.5, 14.2, 1, 0); monitor(g, 12.25, 14.2, 1);
+  mesa(g, 11.85, 12.42, 11.2, 12.6); cadeira(g, 11.5, 11.9, 1, 0); monitor(g, 12.25, 11.9, 1);
+  armario(g, 9.5, 11.2, 10.88, 11.25, 1.9); planta(g, 7.6, 14.85, 1.4);
+  // sala de reunião (quarto 1)
+  mesa(g, 5.55, 6.65, 7.6, 10.0, C.nogueira);
+  [7.95, 8.8, 9.65].forEach(function(z){ cadeira(g, 5.2, z, 1, 0); cadeira(g, 7.0, z, -1, 0); });
+  cadeira(g, 6.1, 10.35, 0, -1); tv(g, 'z', 5.9, 5.3, 6.9); planta(g, 7.2, 10.5, 1.2);
+  // sala cowork: duas bancadas com baias
+  mesa(g, 6.3, 9.4, 3.2, 3.8);
+  [6.7, 7.5, 8.3, 9.05].forEach(function(x){ cadeira(g, x, 4.17, 0, -1); monitor(g, x, 3.38, 0); });
+  [7.1, 7.9, 8.68].forEach(function(x){ box(g, x-0.015, x+0.015, 0.75, 1.15, 3.2, 3.8, C.destaque, false); });
+  mesa(g, 11.85, 12.42, 3.25, 5.7);
+  [3.6, 4.2, 4.8, 5.4].forEach(function(z){ cadeira(g, 11.5, z, 1, 0); monitor(g, 12.25, z, 1); });
+  [3.9, 4.5, 5.1].forEach(function(z){ box(g, 11.85, 12.42, 0.75, 1.15, z-0.015, z+0.015, C.destaque, false); });
+  planta(g, 10.6, 5.45, 1.4);
+  // cozinha: bancada sob as janelas, geladeira, cooktop com coifa, ilha com banquetas e armário alto
+  bancada(g, 5.6, 11.9, 0.1, 0.7);
+  box(g, 4.82, 5.5, 0, 1.85, 0.1, 0.8, matInox, true);
+  cuba(g, 7.15, 0.4);
+  box(g, 9.0, 9.7, 0.9, 0.92, 0.14, 0.66, C.tela, false);
+  box(g, 9.0, 9.7, 1.75, 2.0, 0.1, 0.55, matInox, true);
+  box(g, 7.8, 8.85, 1.5, 2.2, 0.1, 0.42, C.branco, true);
+  box(g, 5.75, 6.25, 0.9, 1.2, 0.2, 0.55, C.tela, false);
+  armario(g, 12.0, 12.43, 0.9, 2.6, 2.1);
+  bancada(g, 7.0, 9.4, 1.55, 2.25, C.madeira);
+  [7.5, 8.2, 8.9].forEach(function(x){ banqueta(g, x, 2.55); });
+  planta(g, 5.05, 2.7, 1.3);
+  // banheiro do térreo: bancada com duas cubas e espelho, sanitário e box de vidro
+  bancada(g, 11.9, 12.4, 6.1, 7.9, C.madeira); cuba(g, 12.15, 6.55); cuba(g, 12.15, 7.45);
+  box(g, 12.4, 12.42, 1.05, 1.95, 6.2, 7.8, matEspelho, false);
+  sanitario(g, 12.0, 8.7, -1, 0);
+  wall(g, 'x', 10.7, 9.7, 10.72, 0, 2.0, matGlass, false, 0.03);
+  wall(g, 'z', 9.7, 9.38, 10.1, 0, 2.0, matGlass, false, 0.03);
+  tapete(g, 9.4, 10.68, 9.72, 10.7);
+  planta(g, 9.68, 8.6, 1.0);
+  // área gourmet (antiga garagem interna): churrasqueira, bancada com pia, geladeira, mesa comunitária e aparador
+  box(g, 0.1, 0.78, 0, 2.3, 0.5, 1.5, matTijolo, true);
+  box(g, 0.74, 0.8, 0.95, 1.45, 0.65, 1.35, C.tela, false);
+  bancada(g, 0.1, 0.72, 1.55, 5.3); cuba(g, 0.41, 2.4);
+  box(g, 0.14, 0.68, 0.9, 0.92, 3.3, 3.9, C.tela, false);
+  box(g, 0.1, 0.82, 0, 1.85, 5.38, 6.08, matInox, true);
+  mesa(g, 2.3, 3.2, 1.2, 5.0, C.nogueira);
+  [1.5, 2.12, 2.74, 3.36, 3.98, 4.6].forEach(function(z){ cadeira(g, 2.02, z, 1, 0); cadeira(g, 3.48, z, -1, 0); });
+  cadeira(g, 2.75, 0.9, 0, 1); cadeira(g, 2.75, 5.3, 0, -1);
+  bancada(g, 3.78, 4.6, 5.7, 6.1, C.madeira);
+  box(g, 3.85, 4.3, 0.9, 1.18, 5.75, 6.05, C.tela, false);
+  box(g, 4.38, 4.56, 0.9, 1.22, 5.78, 6.02, C.metal, false);
+  tv(g, 'x', 4.6, 2.3, 3.7);
+  planta(g, 4.35, 0.45, 1.5); planta(g, 4.35, 5.25, 1.2);
+  // beira da piscina
+  [[7.4, 9.2], [9.6, 11.4]].forEach(function(z){ box(g, 3.65, 4.3, 0.22, 0.32, z[0], z[1], C.lona, true); box(g, 3.65, 4.3, 0.32, 0.62, z[0], z[0]+0.08, C.lona, false); });
+  planta(g, 0.45, 7.0, 1.6); planta(g, 0.45, 9.1, 1.6); planta(g, 0.45, 11.2, 1.6);
+})();
+
+/* andar superior */
+(function(){
+  var g = fS;
+  // sala de vidro (6 pessoas): mesa em U + mesa pequena
+  mesa(g, 4.86, 5.44, 12.6, 15.1); mesa(g, 5.44, 7.33, 14.45, 15.1); mesa(g, 5.44, 9.36, 12.6, 13.25); mesa(g, 10.98, 11.62, 13.55, 14.7);
+  [6.2, 7.4, 8.6].forEach(function(x){ cadeira(g, x, 13.62, 0, -1); monitor(g, x, 12.82, 0); });
+  [6.1, 6.95].forEach(function(x){ cadeira(g, x, 14.1, 0, 1); monitor(g, x, 14.88, 0); });
+  cadeira(g, 10.62, 14.1, 1, 0); monitor(g, 11.45, 14.1, 1);
+  planta(g, 12.2, 12.7, 1.4); planta(g, 12.2, 14.9, 1.4);
+  // sala de 3 pessoas
+  mesa(g, 6.5, 8.92, 11.6, 12.25);
+  [7.1, 8.3].forEach(function(x){ cadeira(g, x, 11.22, 0, 1); monitor(g, x, 12.05, 0); });
+  mesa(g, 5.8, 6.87, 9.25, 10.7); cadeira(g, 7.25, 10.0, -1, 0); monitor(g, 6.0, 10.0, 1);
+  armario(g, 8.78, 9.12, 10.3, 11.3, 1.1); planta(g, 4.98, 12.05, 1.4);
+  // sala individual (1 pessoa): mesa, aparador, sofá e tapete
+  tapete(g, 5.8, 8.3, 7.4, 9.0, C.tapete2);
+  box(g, 4.82, 5.3, 0, 0.8, 6.6, 8.4, C.nogueira, true);
+  mesa(g, 6.45, 7.28, 5.95, 7.3, C.nogueira); cadeira(g, 7.72, 6.6, -1, 0, C.couro); monitor(g, 6.6, 6.6, 1);
+  sofa(g, 6.0, 8.0, 8.3, 9.03, 0, 1); planta(g, 8.85, 8.85, 1.5); planta(g, 5.0, 8.8, 1.2);
+  // sala da construtora (2 pessoas)
+  mesa(g, 6.11, 7.81, 0.12, 2.75);
+  [0.9, 2.0].forEach(function(z){ cadeira(g, 8.2, z, -1, 0); monitor(g, 7.6, z, 1); });
+  planta(g, 8.9, 0.35, 1.3);
+  // banheiro compartilhado: bancada com cuba e espelho, sanitário e box de vidro
+  bancada(g, 9.3, 9.78, 0.3, 1.6, C.madeira); cuba(g, 9.54, 0.95);
+  box(g, 9.28, 9.3, 1.05, 1.95, 0.4, 1.5, matEspelho, false);
+  sanitario(g, 10.95, 0.45, 0, 1);
+  wall(g, 'x', 11.55, 0.08, 1.15, 0, 2.0, matGlass, false, 0.03);
+  tapete(g, 11.58, 12.42, 0.1, 1.13);
+  // banheiro da suíte (posição a confirmar)
+  sanitario(g, 5.1, 4.4, 0, -1);
+  box(g, 5.5, 5.82, 0, 0.86, 4.35, 4.72, C.branco, true); box(g, 5.5, 5.82, 0.86, 0.9, 4.35, 4.72, matInox, false);
+  planta(g, 8.9, 4.4, 1.3);
+  // corredor: passadeira, plantas e quadros (sem sofá)
+  tapete(g, 10.2, 11.4, 3.0, 11.6);
+  planta(g, 12.2, 11.95, 1.4); planta(g, 12.2, 2.55, 1.2); planta(g, 12.2, 6.6, 1.3);
+  quadro(g, 'x', 12.41, 3.3, 4.3, C.destaque); quadro(g, 'x', 12.41, 7.0, 8.4, matMostarda); quadro(g, 'x', 12.41, 10.6, 11.5, C.sofa);
+})();
+
+/* linhas-guia do modo "os dois" */
+[[CASA.x0,CASA.z0],[CASA.x1,CASA.z0],[CASA.x0,CASA.z1],[CASA.x1,CASA.z1]].forEach(function(p){
+  var geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p[0], H, p[1]), new THREE.Vector3(p[0], GAP-0.12, p[1])]);
+  guides.add(new THREE.Line(geo, matGuide));
+});
+
+/* ---------- rótulos ---------- */
+var marks = [];
+function addLabel(text, x, y, z, group, cls){
+  var el = document.createElement('div'); el.className = 'lb' + (cls ? ' ' + cls : ''); el.textContent = text;
+  labelsEl.appendChild(el);
+  var o = {el:el, pos:new THREE.Vector3(x, y, z), group:group};
+  marks.push(o); return o;
+}
+Object.keys(rooms).forEach(function(id){
+  var R = rooms[id], r = R.def;
+  R.label = addLabel(r.curto, (r.x0+r.x1)/2, 0.2, (r.z0+r.z1)/2, R.group);
+});
+addLabel('Escada', 5.3, 1.3, 4.5, gT);
+addLabel('ENTRADA', -1.5, 0, 16.9, lot, 'mark');
+addLabel('RUA', -1.5, 0, 6.0, lot, 'mark');
+addLabel('RUA', 8.6, 0, -1.6, lot, 'mark');
+addLabel('Sala de vidro', 4.3, 4.5, 13.8, shell);
+addLabel('Portão preto', 2.7, 1.4, -0.4, shell);
+addLabel('Portões brancos', -0.3, 1.2, 14.6, shell);
+addLabel('5 m', 5.7, 0, 19.8, lot, 'mark');
+
+/* ---------- painel ---------- */
+function totais(def){ return def.rooms.reduce(function(s, r){ return (r.part || r.tipo === 'ext' || r.tipo === 'cov') ? s : s + areaDe(r); }, 0); }
+var aT = totais(TERREO), aS = totais(SUPERIOR);
+document.getElementById('areaTotal').textContent = '≈ ' + Math.round(aT + aS) + ' m²';
+
+function fillInfo(id){
+  var R = id ? rooms[id] : null;
+  infoEl.textContent = '';
+  infoEl.hidden = !R;
+  if (!R) return;
+  var h = document.createElement('h2'), d = document.createElement('div'), p = document.createElement('p'), s = document.createElement('p');
+  d.className = 'dims'; s.className = 'src';
+  if (R) {
+    var r = R.def;
+    h.textContent = r.nome;
+    d.textContent = R.andar + ' · ≈ ' + fmt(r.x1-r.x0) + ' × ' + fmt(r.z1-r.z0) + ' m · ' + fmt(areaDe(r), 0) + ' m²' + (r.pessoas ? ' · ' + r.pessoas + (r.pessoas > 1 ? ' pessoas' : ' pessoa') : '');
+    p.textContent = r.nota;
+    s.textContent = 'Posição conforme o seu desenho. Medidas estimadas.';
+  } else {
+    h.textContent = 'Casa em dois andares';
+    d.textContent = 'Térreo ≈ ' + Math.round(aT) + ' m² · Superior ≈ ' + Math.round(aS) + ' m²';
+    p.textContent = 'Toque num cômodo, na maquete ou na lista, para ver o tamanho estimado e quantas pessoas cabem. Na vista Por fora, role sobre um cômodo ou toque nele para entrar; as setas levam de um cômodo ao outro.';
+    s.textContent = 'Fora da conta: garagem interna, área da piscina, entrada e o cômodo a definir.';
+  }
+  infoEl.appendChild(h); infoEl.appendChild(d); infoEl.appendChild(p); infoEl.appendChild(s);
+  if (R && inside !== id) {
+    var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'tog'; bt.textContent = 'Entrar neste cômodo';
+    bt.addEventListener('click', function(){ enterRoom(id); }); infoEl.appendChild(bt);
+  }
+}
+
+function buildChips(){
+  [[TERREO, 'roomsT'], [SUPERIOR, 'roomsS']].forEach(function(pair){
+    var host = document.getElementById(pair[1]);
+    if (!host) return;
+    pair[0].rooms.forEach(function(r){
+      if (r.part) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.id = 'chip-' + r.id;
+      b.setAttribute('aria-pressed', 'false');
+      var i = document.createElement('i'); i.style.background = TIPOS[r.tipo].cor;
+      b.appendChild(i); b.appendChild(document.createTextNode(r.nome));
+      b.addEventListener('click', function(){ if (mode === 'fora') { enterRoom(r.id); return; } select(selected === r.id ? null : r.id, true); });
+      host.appendChild(b);
+      if (rooms[r.id]) rooms[r.id].chip = b;
+    });
+  });
+}
+buildChips();
+
+/* ---------- seleção, modos, câmera ---------- */
+var selected = null, mode = 'fora', dirty = true, tween = null, topView = false;
+var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var accent = new THREE.Color('#0B6E8F');
+
+function paint(){
+  Object.keys(rooms).forEach(function(id){
+    var R = rooms[id], on = id === selected;
+    R.meshes.forEach(function(m){ m.material.color.copy(on && !inside ? accent : R.base); });
+    if (R.label) R.label.el.classList.toggle('sel', on);
+    if (R.chip) R.chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  dirty = true;
+}
+function centerOf(id){
+  var R = rooms[id], r = R.def;
+  return new THREE.Vector3((r.x0+r.x1)/2, R.group.position.y, (r.z0+r.z1)/2);
+}
+function select(id, fly){
+  if (id) {
+    var R = rooms[id];
+    if (mode === 'fora' || !R.group.visible) setMode(R.andar === 'Térreo' ? 'terreo' : 'sup', true);
+    if (mode === 'both' && R.andar === 'Térreo' && rooms[id].def.x0 >= CASA.x0 && rooms[id].def.z1 <= CASA.z1) setMode('terreo', true);
+  }
+  selected = id; paint(); fillInfo(id);
+  if (id && fly) flyTo(centerOf(id), null);
+}
+function fitScale(){ var a = camera.aspect || 1; return Math.max(1, 1.2 / a); }
+function homeTarget(){ return new THREE.Vector3(6.25, mode === 'both' ? 2.2 : (mode === 'fora' ? 2.4 : 0), 9.25); }
+function homePos(){
+  var s = fitScale(), t = homeTarget();
+  if (topView) return new THREE.Vector3(t.x + 0.01, t.y + 37 * s, t.z);
+  return new THREE.Vector3(t.x - 13 * s, t.y + 16 * s, t.z + 20 * s);
+}
+function flyTo(target, pos, done){
+  var toP = pos || camera.position.clone().add(target.clone().sub(controls.target));
+  tween = {t0:performance.now(), d:reduce ? 0 : 480, fromT:controls.target.clone(), toT:target, fromP:camera.position.clone(), toP:toP, done:done};
+  dirty = true;
+}
+function setMode(m, keepCam){
+  if (inside) leaveRoom(true);
+  mode = m;
+  var fora = m === 'fora', sy = fora ? FH / H : 1;
+  gT.visible = m !== 'sup';
+  gS.visible = m !== 'terreo';
+  gT.scale.y = sy; gS.scale.y = sy;
+  gS.position.y = fora ? FH : (m === 'both' ? GAP : 0);
+  fT.visible = gT.visible; fS.visible = gS.visible; fS.position.y = gS.position.y;
+  shell.visible = fora; muros.visible = !fora && m !== 'sup'; lot.visible = m !== 'sup'; escS.visible = m === 'sup' || m === 'both';
+  guides.visible = m === 'both';
+  MODOS.forEach(function(id){
+    var b = document.getElementById(id); b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false');
+  });
+  if (selected && (fora || !rooms[selected].group.visible)) { selected = null; paint(); fillInfo(null); }
+  if (!keepCam) flyTo(homeTarget(), homePos());
+  dirty = true;
+}
+var MODOS = ['mFora','mTerreo','mSup','mBoth'];
+MODOS.forEach(function(id){
+  document.getElementById(id).addEventListener('click', function(){ setMode(this.getAttribute('data-mode')); });
+});
+document.getElementById('btnTop').addEventListener('click', function(){
+  if (inside) leaveRoom(true);
+  topView = !topView; this.setAttribute('aria-pressed', topView ? 'true' : 'false');
+  flyTo(homeTarget(), homePos());
+});
+var showNames = true;
+document.getElementById('btnNames').addEventListener('click', function(){
+  showNames = !showNames; this.setAttribute('aria-pressed', showNames ? 'true' : 'false');
+  labelsEl.hidden = !showNames; dirty = true;
+});
+
+/* toque num cômodo */
+var ray = new THREE.Raycaster(), down = null;
+canvas.addEventListener('pointerdown', function(e){ down = {x:e.clientX, y:e.clientY}; });
+canvas.addEventListener('pointerup', function(e){
+  if (!down) return;
+  var moved = Math.abs(e.clientX-down.x) + Math.abs(e.clientY-down.y); down = null;
+  if (moved > 8 || inside) return;
+  var rc = canvas.getBoundingClientRect();
+  var p = new THREE.Vector2(((e.clientX-rc.left)/rc.width)*2-1, -((e.clientY-rc.top)/rc.height)*2+1);
+  ray.setFromCamera(p, camera);
+  var hit = ray.intersectObjects(floors.filter(function(m){ return m.parent.visible; }), false)[0];
+  var id = hit ? hit.object.userData.id : null;
+  if (mode === 'fora') { if (id) enterRoom(id); return; }
+  select(id === selected ? null : id, false);
+});
+
+/* ---------- entrar nos cômodos (vista por dentro, com a casa fechada) ---------- */
+var inside = null, tourEl = document.getElementById('tour'), tNome = document.getElementById('tNome');
+var ORDEM = ['ent','rec','s2p','corr','sala2','prox','q1','sala','b1','coz','patio','gi','hall','qv','s3','s1','constr','bc','esc','bsu'].filter(function(id){ return rooms[id]; });
+function enterRoom(id){
+  if (mode !== 'fora') setMode('fora', true);
+  var R = rooms[id], r = R.def, fy = R.andar === 'Térreo' ? 0 : FH;
+  var rad = Math.min(2.4, Math.max(0.55, Math.min(r.x1 - r.x0, r.z1 - r.z0) / 2 - 0.3));
+  var t = new THREE.Vector3((r.x0 + r.x1) / 2, fy + 1.2, (r.z0 + r.z1) / 2);
+  var lx = (r.x1 - r.x0) >= (r.z1 - r.z0) ? 0.95 : 0.3, lz = lx > 0.5 ? 0.3 : 0.95;
+  var p = new THREE.Vector3(t.x + rad * lx, t.y + 0.3, t.z + rad * lz);
+  inside = id; selected = id;
+  if (topView) { topView = false; document.getElementById('btnTop').setAttribute('aria-pressed', 'false'); }
+  controls.minDistance = 0.01; controls.maxDistance = 400; controls.minPolarAngle = 0;
+  camera.fov = 68; camera.near = 0.05; camera.updateProjectionMatrix();
+  flyTo(t, p, function(){ if (inside !== id) return; controls.minDistance = 0.25; controls.maxDistance = rad; controls.minPolarAngle = 1.0; });
+  tNome.textContent = r.nome + ' · ' + R.andar.toLowerCase();
+  tourEl.hidden = false;
+  document.getElementById('btnTour').setAttribute('aria-pressed', 'true');
+  paint(); fillInfo(id);
+}
+function leaveRoom(semVoo){
+  inside = null; selected = null;
+  controls.minDistance = 2; controls.maxDistance = 120; controls.minPolarAngle = 0;
+  camera.fov = 38; camera.near = 0.1; camera.updateProjectionMatrix();
+  tourEl.hidden = true;
+  document.getElementById('btnTour').setAttribute('aria-pressed', 'false');
+  paint(); fillInfo(null);
+  if (!semVoo) flyTo(homeTarget(), homePos());
+}
+function passo(n){ var i = ORDEM.indexOf(inside); enterRoom(ORDEM[(i + n + ORDEM.length) % ORDEM.length]); }
+document.getElementById('tPrev').addEventListener('click', function(){ passo(-1); });
+document.getElementById('tNext').addEventListener('click', function(){ passo(1); });
+document.getElementById('tSair').addEventListener('click', function(){ leaveRoom(false); });
+document.getElementById('btnTour').addEventListener('click', function(){ if (inside) leaveRoom(false); else enterRoom(rooms.rec ? 'rec' : ORDEM[0]); });
+controls.addEventListener('end', function(){
+  if (inside || mode !== 'fora' || tween) return;
+  if (camera.position.distanceTo(controls.target) > 11) return;
+  ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+  var hit = ray.intersectObjects(floors, false)[0];
+  if (hit) enterRoom(hit.object.userData.id);
+});
+// rolar sobre um cômodo, na vista de fora: a câmera vai na direção dele, atravessa a parede e entra
+canvas.addEventListener('wheel', function(e){
+  if (inside || mode !== 'fora' || e.deltaY >= 0 || tween) return;
+  var rc = canvas.getBoundingClientRect();
+  var p = new THREE.Vector2(((e.clientX-rc.left)/rc.width)*2-1, -((e.clientY-rc.top)/rc.height)*2+1);
+  ray.setFromCamera(p, camera);
+  var hit = ray.intersectObjects(floors, false)[0];
+  if (!hit) return;
+  controls.target.lerp(new THREE.Vector3(hit.point.x, hit.point.y + 1, hit.point.z), 0.18);
+  dirty = true;
+  if (camera.position.distanceTo(controls.target) < 13) enterRoom(hit.object.userData.id);
+}, {passive:true});
+
+/* tema */
+function applyTheme(){
+  var cs = getComputedStyle(document.documentElement);
+  function v(n, fb){ var s = cs.getPropertyValue(n).trim(); return s || fb; }
+  renderer.setClearColor(new THREE.Color(v('--scene', '#DFE6EC')), 1);
+  lotMat.color.set(v('--lot', '#CDD6DE'));
+  matEdge.color.set(v('--ink', '#14253A') === '#E6EEF5' ? '#0B1522' : '#14253A');
+  matGuide.color.set(v('--muted', '#566779'));
+  accent.set(v('--accent', '#0B6E8F'));
+  paint();
+}
+if (window.matchMedia) {
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', applyTheme); else if (mq.addListener) mq.addListener(applyTheme);
+}
+new MutationObserver(applyTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+/* tamanho */
+var first = true;
+function resize(){
+  var w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  if (first) { first = false; controls.target.copy(homeTarget()); camera.position.copy(homePos()); }
+  dirty = true;
+}
+if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize', resize);
+
+controls.addEventListener('change', function(){ dirty = true; });
+
+var tmp = new THREE.Vector3();
+function placeLabels(){
+  var w = stage.clientWidth, h = stage.clientHeight;
+  marks.forEach(function(o){
+    if (inside || !o.group.visible || (mode === 'fora' && (o.group === gT || o.group === gS))) { o.el.hidden = true; return; }
+    tmp.copy(o.pos); tmp.y += o.group.position.y; tmp.project(camera);
+    if (tmp.z > 1 || tmp.z < -1) { o.el.hidden = true; return; }
+    o.el.hidden = false;
+    var x = (tmp.x * 0.5 + 0.5) * w, y = (-tmp.y * 0.5 + 0.5) * h;
+    o.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translate(-50%,-50%)';
+  });
+}
+function ease(k){ return k < 0.5 ? 2*k*k : 1 - Math.pow(-2*k+2, 2) / 2; }
+function frame(now){
+  requestAnimationFrame(frame);
+  if (tween) {
+    var k = tween.d ? Math.min(1, (now - tween.t0) / tween.d) : 1, e = ease(k);
+    controls.target.lerpVectors(tween.fromT, tween.toT, e);
+    camera.position.lerpVectors(tween.fromP, tween.toP, e);
+    if (k >= 1) { var fim = tween.done; tween = null; if (fim) fim(); }
+    dirty = true;
+  }
+  controls.update();
+  if (!dirty) return;
+  dirty = false;
+  renderer.render(scene, camera);
+  if (showNames) placeLabels();
+}
+
+fillInfo(null);
+setMode('fora', true);
+applyTheme();
+resize();
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
