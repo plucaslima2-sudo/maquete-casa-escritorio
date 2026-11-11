@@ -186,8 +186,10 @@ var TERREO = {
   rooms: [
     {id:'gi', nome:'Área gourmet (antiga garagem interna)', curto:'Área gourmet', tipo:'cov', x0:0, x1:4.7, z0:0, z1:6.2, sides:'', pessoas:14,
       nota:'Churrasqueira, bancada com pia e cooktop, geladeira, aparador e uma mesa comunitária de 14 lugares. Com cerca de 25 pessoas no escritório, o almoço cabe em dois turnos. Por fora continua sendo a parte preta da esquina.'},
+    {id:'coz', nome:'Cozinha', curto:'Cozinha', tipo:'molhado', x0:4.7, x1:12.5, z0:0, z1:3.1, sides:'NWE',
+      nota:'Bancada sob as janelas com pia e cooktop, geladeira, ilha com banquetas e armário alto. A passagem para a sala cowork fica do lado oposto à piscina.'},
     {id:'sala', nome:'Sala cowork', curto:'Cowork', tipo:'social', x0:4.7, x1:12.5, z0:3.1, z1:5.8, sides:'WE', area:30.1,
-      nota:'Duas bancadas longas com baias (8 lugares) e a escada em L no canto: começa junto à parede do fundo (divisa com o vizinho), colada na parede da piscina, e termina de subir junto à parede da sala de reunião.'},
+      nota:'Duas bancadas longas com baias (8 lugares) e a escada em L no canto: começa do lado da cozinha, colada na parede da piscina, e termina de subir junto à parede da sala de reunião.'},
     {id:'salab', part:'sala', tipo:'social', x0:7.5, x1:9.3, z0:5.8, z1:10.8, sides:''},
     {id:'q1', nome:'Sala de reunião (Quarto 1)', curto:'Reunião', tipo:'quarto', x0:4.7, x1:7.5, z0:5.8, z1:10.8,
       nota:'Mesa de reunião com 7 lugares e TV. Sem janela; a porta dá para o corredor interno.'},
@@ -210,6 +212,8 @@ var TERREO = {
       nota:'Antiga garagem externa, com mesa de reunião longa de 10 lugares e TV. Tem uma porta para a sala da frente e vidro separando do corredor.'}
   ],
   openings: [
+    {axis:'z', at:0, from:6.75, to:7.55, kind:'window'},
+    {axis:'z', at:0, from:9.75, to:11.55, kind:'window'},
     {axis:'x', at:7.5, from:6.45, to:7.2, kind:'door'},
     {axis:'x', at:9.3, from:6.45, to:7.2, kind:'door'},
     {axis:'z', at:15.2, from:5.1, to:6.0, kind:'door'},
@@ -217,7 +221,8 @@ var TERREO = {
     {axis:'z', at:6.2, from:0, to:3.7, kind:'gate'}
   ],
   extra: [
-    {axis:'z', at:3.1, from:4.7, to:12.5},
+    {axis:'z', at:3.1, from:4.7, to:9.7},
+    {axis:'z', at:3.1, from:11.15, to:12.5},
     {axis:'z', at:6.2, from:0, to:4.7}
   ],
   vidros: [
@@ -241,7 +246,7 @@ var SUPERIOR = {
     {id:'esc', nome:'Escada', curto:'Escada', tipo:'circ', x0:7.8, x1:9.2, z0:4.8, z1:5.8, sides:'',
       nota:'Chegada da escada em L que vem do térreo, entre a Sala e a construtora. O vão aberto mostra os degraus descendo; a escada sai direto no corredor e tem o painel de cobogó na fachada. Com o andar de cima na posição nova, esta chegada ficou cerca de 3 m à frente da escada do térreo: falta acertar com as medidas.'},
     {id:'constr', nome:'Sala da construtora (suíte)', curto:'Construtora', tipo:'quarto', x0:4.7, x1:9.2, z0:0, z1:4.8, pessoas:2,
-      nota:'No fundo do andar, encostada na parte do vizinho, com uma mesa grande. Tem banheiro próprio.'},
+      nota:'No fundo do andar, com uma mesa grande. Tem banheiro próprio.'},
     {id:'bsu', nome:'Banheiro da suíte (posição a confirmar)', curto:'Banho suíte ?', tipo:'molhado', x0:4.7, x1:5.9, z0:3.7, z1:4.8, sides:'NE', lift:0.012,
       nota:'A suíte tem banheiro, mas a divisão não foi desenhada. A posição aqui é um palpite.'},
     {id:'bc', nome:'Banheiro compartilhado', curto:'Banheiro', tipo:'molhado', x0:9.2, x1:12.5, z0:0, z1:2.1,
@@ -263,6 +268,8 @@ var SUPERIOR = {
     {axis:'x', at:4.7, from:4.9, to:5.7, kind:'cobogo'},
     {axis:'x', at:4.7, from:4.0, to:4.5, kind:'window'},
     {axis:'x', at:4.7, from:0.6, to:2.0, kind:'window'},
+    {axis:'z', at:0, from:5.6, to:8.2, kind:'window'},
+    {axis:'z', at:0, from:10.3, to:11.6, kind:'window'},
     {axis:'x', at:12.5, from:5.0, to:6.0, kind:'cobogo'},
     {axis:'x', at:12.5, from:9.0, to:10.0, kind:'cobogo'}
   ],
@@ -271,7 +278,7 @@ var SUPERIOR = {
 };
 
 var LOTE = {x0:0, x1:12.5, z0:0, z1:18.5};
-var RECUO = 3.3;   // faixa do fundo (lado do portão preto) que é do vizinho, em cima e embaixo
+var RECUO = 3.3;   // o andar de cima não cobre a faixa do fundo (em cima da cozinha, lado do portão preto)
 var CASA = {x0:4.7, x1:12.5, z0:RECUO, z1:18.5};   // projeção do andar de cima: termina junto com o fim do muro dos portões brancos
 (function(){   // a planta de cima foi desenhada a partir do zero: aqui ela anda RECUO para a frente
   function av(v){ return Math.round((v + RECUO) * 100) / 100; }
@@ -428,8 +435,6 @@ var matFaixa = new THREE.MeshLambertMaterial({color:0x2F4FA8});
 var matBranco = new THREE.MeshLambertMaterial({color:0xF6F6F3});
 var matTelha = new THREE.MeshLambertMaterial({color:0xB8573A});
 var matCalcada = new THREE.MeshLambertMaterial({color:0xD9D3C6});
-var matVizinho = new THREE.MeshLambertMaterial({color:0xB9A7E6}), matVizTelha = new THREE.MeshLambertMaterial({color:0x6E55B0});
-var matVizClaro = new THREE.MeshLambertMaterial({color:0xE6DEFA}), matVizJanela = new THREE.MeshLambertMaterial({color:0x2B3440}), matVizPortao = new THREE.MeshLambertMaterial({color:0x2A2C31});
 var matCobertura = new THREE.MeshLambertMaterial({color:0xC9C6BF});
 
 function vidro(g, v){
@@ -452,7 +457,7 @@ function palmeira(x, z){
   var co = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 6), new THREE.MeshLambertMaterial({color:0x4E9A4A}));
   co.scale.set(1.15, 0.42, 1.15); co.position.set(x, 2.7, z); lot.add(co);
 }
-palmeira(-1.3, 2.6); palmeira(-1.3, 9.0); palmeira(-1.3, 14.9); palmeira(11.6, -1.3);
+palmeira(-1.3, 2.6); palmeira(-1.3, 9.0); palmeira(-1.3, 14.9); palmeira(7.0, -1.3);
 
 /* muros baixos (só nas vistas em corte) */
 var MH = 1.1;
@@ -466,9 +471,6 @@ wall(muros, 'x', 12.5, 15.2, 18.5, 0, MH, matMuro, true, 0.12, true);
 wall(muros, 'z', 0, 0, 1.05, 0, MH, matMuro, true, 0.12, true);
 wall(muros, 'z', 0, 4.45, 4.7, 0, MH, matMuro, true, 0.12, true);
 wall(muros, 'z', 0, 1.05, 4.45, 0, MH, matGate, false, 0.05);           // portão preto de enrolar
-
-/* parte do vizinho nas vistas em corte: bloco fechado, em outra cor */
-box(muros, CASA.x0 - 0.06, CASA.x1 + 0.06, 0, H, -0.06, 3.03, matVizinho, true);
 
 /* casca de fora, conforme as fotos da rua */
 (function(){
@@ -506,29 +508,8 @@ box(muros, CASA.x0 - 0.06, CASA.x1 + 0.06, 0, H, -0.06, 3.03, matVizinho, true);
   var telhado = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, {depth: CASA.z1 - CASA.z0 + 1, bevelEnabled:false}), matTelha);
   telhado.position.set(0, 2*FH, CASA.z0 - 0.5); shell.add(telhado);
   box(shell, CASA.x0 - 0.5, CASA.x1 + 0.5, 2*FH - 0.1, 2*FH, CASA.z0 - 0.5, CASA.z1 + 0.5, matBranco, true);
-  // parte do vizinho (mesma casa, dividida): mesma parede, beiral e telha, em outra cor
-  (function(){
-    var x0 = CASA.x0 - 0.06, x1 = CASA.x1 + 0.08, z0 = -0.08, top = 2*FH - 0.1;
-    box(shell, x0, x1, 0, FH, z0, 3.03, matVizinho, true);
-    box(shell, x0, x1, FH, top, z0, RECUO - 0.08, matVizinho, true);
-    box(shell, x0, x1, FH - 0.06, FH + 0.06, z0 - 0.02, 3.03, matVizClaro, false);
-    box(shell, CASA.x0 - 0.5, CASA.x1 + 0.5, top, 2*FH, -0.5, RECUO - 0.5, matVizClaro, true);
-    var tv = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, {depth: RECUO, bevelEnabled:false}), matVizTelha);
-    tv.position.set(0, 2*FH, -0.5); shell.add(tv);
-    box(shell, 4.6, 4.635, 0, 4.27, 0.1, 3.03, matWall, false);                    // forro claro do lado da área gourmet
-    // fachada para a rua do portão preto: janela com toldo, ar-condicionado e janela menor
-    box(shell, 6.3, 8.5, FH + 0.85, FH + 2.05, z0 - 0.05, z0, matBranco, false);
-    box(shell, 6.42, 8.38, FH + 0.95, FH + 1.95, z0 - 0.07, z0 - 0.04, matVizJanela, false);
-    box(shell, 6.2, 8.6, FH + 2.05, FH + 2.15, z0 - 0.55, z0, matBranco, true);
-    box(shell, 5.3, 5.95, FH + 0.75, FH + 1.2, z0 - 0.32, z0, matBranco, true);
-    box(shell, 10.2, 11.4, FH + 1.1, FH + 1.95, z0 - 0.05, z0, matVizJanela, false);
-    // entrada do vizinho no muro de azulejo: portão escuro entre os pilares e toldo branco
-    box(shell, 5.9, 9.1, 0, 2.3, -0.42, -0.2, matVizPortao, true);
-    box(shell, 5.9, 9.1, 1.72, 1.78, -0.44, -0.42, matEnrolar, false);
-    box(shell, 5.9, 9.1, 1.98, 2.04, -0.44, -0.42, matEnrolar, false);
-    box(shell, 7.0, 7.05, 0, 1.72, -0.44, -0.42, matEnrolar, false);
-    box(shell, 5.2, 9.6, 2.5, 2.58, -0.3, -0.08, matBranco, true);
-  })();
+  // laje da cozinha, que fica fora da projeção do andar de cima
+  box(shell, CASA.x0 - 0.07, CASA.x1 + 0.07, FH, FH + 0.1, -0.07, RECUO - 0.07, matCobertura, true);
   // ar-condicionado na fachada da rua lateral
   [[8.5, 9.0], [11.65, 12.2], [2.05, 2.6]].forEach(function(a){ box(shell, CASA.x0 - 0.32, CASA.x0 - 0.07, FH + 1.9, FH + 2.35, a[0] + RECUO, a[1] + RECUO, matBranco, true); });
 })();
@@ -541,7 +522,7 @@ box(muros, CASA.x0 - 0.06, CASA.x1 + 0.06, 0, H, -0.06, 3.03, matVizinho, true);
   agua.scale.set(0.95, 1, 2.1); agua.position.set(2.2, 0.07, 9.1); fT.add(agua);
 })();
 
-/* escada em L, no canto da sala cowork: começa junto à parede do fundo (divisa com o vizinho), 1º lance colado na parede da piscina,
+/* escada em L, no canto da sala cowork: começa do lado da cozinha, 1º lance colado na parede da piscina,
    patamar no canto, 2º lance junto à parede da sala de reunião, chegando em cima no vão da escada */
 var escS = new THREE.Group(); escS.position.z = RECUO; gS.add(escS);
 (function(){
@@ -665,6 +646,18 @@ function quadro(g, axis, at, a, b, mat){ if (axis === 'z') box(g, a, b, 1.25, 1.
   [3.6, 4.2, 4.8, 5.4].forEach(function(z){ cadeira(g, 11.5, z, 1, 0); monitor(g, 12.25, z, 1); });
   [3.9, 4.5, 5.1].forEach(function(z){ box(g, 11.85, 12.42, 0.75, 1.15, z-0.015, z+0.015, C.destaque, false); });
   planta(g, 10.6, 5.45, 1.4);
+  // cozinha: bancada sob as janelas, geladeira, cooktop com coifa, ilha com banquetas e armário alto
+  bancada(g, 5.6, 11.9, 0.1, 0.7);
+  box(g, 4.82, 5.5, 0, 1.85, 0.1, 0.8, matInox, true);
+  cuba(g, 7.15, 0.4);
+  box(g, 9.0, 9.7, 0.9, 0.92, 0.14, 0.66, C.tela, false);
+  box(g, 9.0, 9.7, 1.75, 2.0, 0.1, 0.55, matInox, true);
+  box(g, 7.8, 8.85, 1.5, 2.2, 0.1, 0.42, C.branco, true);
+  box(g, 5.75, 6.25, 0.9, 1.2, 0.2, 0.55, C.tela, false);
+  armario(g, 12.0, 12.43, 0.9, 2.6, 2.1);
+  bancada(g, 7.0, 9.4, 1.55, 2.25, C.madeira);
+  [7.5, 8.2, 8.9].forEach(function(x){ banqueta(g, x, 2.55); });
+  planta(g, 5.05, 2.7, 1.3);
   // banheiro do térreo: bancada com duas cubas e espelho, sanitário e box de vidro
   bancada(g, 11.9, 12.4, 6.1, 7.9, C.madeira); cuba(g, 12.15, 6.55); cuba(g, 12.15, 7.45);
   box(g, 12.4, 12.42, 1.05, 1.95, 6.2, 7.8, matEspelho, false);
@@ -754,8 +747,6 @@ addLabel('ENTRADA', -1.5, 0, 16.9, lot, 'mark');
 addLabel('RUA', -1.5, 0, 6.0, lot, 'mark');
 addLabel('RUA', 8.6, 0, -1.6, lot, 'mark');
 addLabel('Sala de vidro', 4.3, 4.5, 13.8 + RECUO, shell);
-addLabel('Vizinho', 9.2, 7.3, 1.2, shell);
-addLabel('Vizinho', 8.6, 1.7, 1.5, muros);
 addLabel('Portão preto', 2.7, 1.4, -0.4, shell);
 addLabel('Portões brancos', -0.3, 1.2, 14.6, shell);
 addLabel('5 m', 5.7, 0, 19.8, lot, 'mark');
@@ -899,7 +890,7 @@ canvas.addEventListener('pointerup', function(e){
 
 /* ---------- entrar nos cômodos (vista por dentro, com a casa fechada) ---------- */
 var inside = null, tourEl = document.getElementById('tour'), tNome = document.getElementById('tNome');
-var ORDEM = ['ent','rec','s2p','corr','sala2','prox','q1','sala','b1','patio','gi','hall','qv','s3','s1','constr','bc','esc','bsu'].filter(function(id){ return rooms[id]; });
+var ORDEM = ['ent','rec','s2p','corr','sala2','prox','q1','sala','b1','coz','patio','gi','hall','qv','s3','s1','constr','bc','esc','bsu'].filter(function(id){ return rooms[id]; });
 function enterRoom(id){
   if (mode !== 'fora') setMode('fora', true);
   var R = rooms[id], r = R.def, fy = R.andar === 'Térreo' ? 0 : FH;
